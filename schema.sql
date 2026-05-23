@@ -94,7 +94,7 @@ SELECT
     id, 
     'Pediatrician (Child Specialist)', 
     12, 
-    'Senior Pediatric Consultant with over 12 years of specialized medical practice. Dedicated to children health, development milestones, immunizations, and child disease management.'
+    'Lucknow based Senior Pediatric Consultant with over 12 years of specialized medical practice. Dedicated to children health, development milestones, immunizations, and child disease management.'
 FROM "NewTokenSystem_departments"
 WHERE name = 'Pediatrics (Child Care)'
 ON CONFLICT (email) DO NOTHING;
