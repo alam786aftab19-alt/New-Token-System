@@ -1,0 +1,20 @@
+# robots.txt for TinyTots Pediatric Clinic Portal
+User-agent: *
+
+# Allow search engines to crawl public marketing pages
+Allow: /
+Allow: /index.html
+Allow: /login.html
+Allow: /signup.html
+
+# Block private dashboards and authentication state endpoints to protect security
+Disallow: /dashboard.html
+Disallow: /doctor-dashboard.html
+Disallow: /admin-dashboard.html
+Disallow: /book-token.html
+Disallow: /verify-otp.html
+Disallow: /forgot-password.html
+Disallow: /api/
+
+# Specify sitemap path
+Sitemap: https://new-token-system.onrender.com/sitemap.xml
