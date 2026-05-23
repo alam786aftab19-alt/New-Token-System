@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Doctor Token | DocToken</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.05), transparent 35%),
+                  radial-gradient(circle at bottom left, rgba(99, 102, 241, 0.05), transparent 35%),
+                  #030712;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    select, input, textarea {
+      background: rgba(255, 255, 255, 0.03) !important;
+      border: 1px solid rgba(255, 255, 255, 0.08) !important;
+      color: white !important;
+      transition: all 0.2s ease-in-out;
+    }
+    select option {
+      background-color: #0b0f19;
+      color: #cbd5e1;
+    }
+    select:focus, input:focus, textarea:focus {
+      border-color: #34d399 !important;
+      box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.15) !important;
+      outline: none;
+    }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col">
+
+  <!-- Header Nav -->
+  <nav class="bg-slate-950/80 backdrop-blur-md border-b border-white/5 px-6 py-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl shadow-lg">
+          <i data-lucide="stethoscopes" class="w-5 h-5 text-slate-950"></i>
+        </div>
+        <span class="text-lg font-bold tracking-tight bg-gradient-to-r from-white to-emerald-400 bg-clip-text text-transparent">DocToken</span>
+      </div>
+      <a href="/dashboard.html" class="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i> Dashboard
+      </a>
+    </div>
+  </nav>
+
+  <!-- Booking form container -->
+  <main class="flex-1 max-w-lg w-full mx-auto px-6 py-12 flex flex-col justify-center">
+    <div class="glass-card p-8 rounded-3xl shadow-2xl relative">
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold tracking-tight text-white mb-2">Book Doctor Token</h2>
+        <p class="text-sm text-slate-400 font-medium">Select details below. Your token will be auto-incremented sequentially.</p>
+      </div>
+
+      <form id="booking-form" class="space-y-6">
+        <!-- 1. Select Department -->
+        <div>
+          <label for="department" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Department</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 pointer-events-none">
+              <i data-lucide="hospital" class="w-4 h-4"></i>
+            </span>
+            <select id="department" required class="w-full pl-10 pr-4 py-3 rounded-xl text-sm bg-slate-900 border-slate-800">
+              <option value="" disabled selected>Select a Department</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 2. Select Doctor -->
+        <div>
+          <label for="doctor" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Doctor</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 pointer-events-none">
+              <i data-lucide="user-round" class="w-4 h-4"></i>
+            </span>
+            <select id="doctor" required disabled class="w-full pl-10 pr-4 py-3 rounded-xl text-sm bg-slate-900 border-slate-800 disabled:opacity-40 disabled:cursor-not-allowed">
+              <option value="" disabled selected>Choose Department First</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Doctor Details Snippet -->
+        <div id="doc-meta" class="hidden p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10 text-xs text-slate-300">
+          <p class="font-bold text-slate-200" id="doc-meta-name"></p>
+          <p class="text-[10px] text-emerald-400 mt-0.5" id="doc-meta-specialty"></p>
+          <p class="mt-2 leading-relaxed" id="doc-meta-bio"></p>
+        </div>
+
+        <!-- 3. Choose Date -->
+        <div>
+          <label for="date" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Appointment Date</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 pointer-events-none">
+              <i data-lucide="calendar" class="w-4 h-4"></i>
+            </span>
+            <input type="date" id="date" required class="w-full pl-10 pr-4 py-3 rounded-xl text-sm bg-slate-900 border-slate-800">
+          </div>
+        </div>
+
+        <!-- 4. Notes / Reason for Visit -->
+        <div>
+          <label for="notes" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2 font-semibold">Notes / Symptoms (Optional)</label>
+          <textarea id="notes" rows="3" placeholder="Brief explanation of symptoms or special requirements..."
+            class="w-full px-4 py-3 rounded-xl text-sm bg-slate-900 border-slate-800"></textarea>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="submit-btn" class="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:brightness-110 text-slate-950 font-bold rounded-xl transition-all duration-300 flex items-center justify-center gap-2">
+          <span>Generate Appointment Token</span>
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+        </button>
+      </form>
+    </div>
+  </main>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full"></div>
+
+  <script>
+    // Authentication guard
+    const token = localStorage.getItem('token');
+    const userJson = localStorage.getItem('user');
+
+    if (!token || !userJson) {
+      window.location.href = '/login.html';
+    }
+
+    // Set min date to today so they cannot book historical dates
+    const todayStr = new Date().toISOString().split('T')[0];
+    document.getElementById('date').min = todayStr;
+    // Set default value to today
+    document.getElementById('date').value = todayStr;
+
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Toast Utility
+    function showToast(message, type = 'error') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const bgColor = type === 'success' ? 'bg-emerald-950/90 border-emerald-500' : 'bg-rose-950/90 border-rose-500';
+      const textColor = type === 'success' ? 'text-emerald-400' : 'text-rose-400';
+      const icon = type === 'success' ? 'check-circle' : 'alert-circle';
+      
+      toast.className = `p-4 rounded-xl border glass-card backdrop-blur-md flex items-start gap-3 shadow-lg transform translate-y-2 opacity-0 transition-all duration-300 ${bgColor}`;
+      toast.innerHTML = `
+        <div class="${textColor} mt-0.5">
+          <i data-lucide="${icon}" class="w-5 h-5"></i>
+        </div>
+        <div class="text-sm font-semibold text-slate-200">${message}</div>
+      `;
+      
+      container.appendChild(toast);
+      lucide.createIcons();
+      
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 10);
+      
+      setTimeout(() => {
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // Cache doctors
+    let loadedDoctors = [];
+
+    // Load Departments on startup
+    async function init() {
+      try {
+        const response = await fetch('/api/doctors/departments');
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          const selectDept = document.getElementById('department');
+          result.data.forEach(dept => {
+            const opt = document.createElement('option');
+            opt.value = dept.id;
+            opt.innerText = dept.name;
+            selectDept.appendChild(opt);
+          });
+        }
+      } catch (err) {
+        console.error('Dept fetch failed:', err);
+        showToast('Failed to load clinic departments');
+      }
+    }
+
+    // Watch Department select change to load doctors
+    document.getElementById('department').addEventListener('change', async (e) => {
+      const deptId = e.target.value;
+      const selectDoc = document.getElementById('doctor');
+      const docMeta = document.getElementById('doc-meta');
+      
+      docMeta.classList.add('hidden');
+      selectDoc.disabled = true;
+      selectDoc.innerHTML = '<option value="" disabled selected>Loading doctors...</option>';
+
+      try {
+        const response = await fetch(`/api/doctors?departmentId=${deptId}`);
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          loadedDoctors = result.data;
+          selectDoc.innerHTML = '<option value="" disabled selected>Choose a Doctor</option>';
+          
+          if (loadedDoctors.length === 0) {
+            selectDoc.innerHTML = '<option value="" disabled>No doctors found in this department</option>';
+            return;
+          }
+
+          loadedDoctors.forEach(doc => {
+            const opt = document.createElement('option');
+            opt.value = doc.id;
+            opt.innerText = `${doc.name} (${doc.specialization})`;
+            selectDoc.appendChild(opt);
+          });
+
+          selectDoc.disabled = false;
+        }
+      } catch (err) {
+        console.error('Doctor fetch failed:', err);
+        showToast('Failed to retrieve doctors list');
+      }
+    });
+
+    // Watch Doctor select to display details preview
+    document.getElementById('doctor').addEventListener('change', (e) => {
+      const docId = parseInt(e.target.value);
+      const matched = loadedDoctors.find(d => d.id === docId);
+      const docMeta = document.getElementById('doc-meta');
+
+      if (matched) {
+        document.getElementById('doc-meta-name').innerText = matched.name;
+        document.getElementById('doc-meta-specialty').innerText = `${matched.specialization} • ${matched.experience || 0} years experience`;
+        document.getElementById('doc-meta-bio').innerText = matched.bio || 'General checkups and expert clinical assessments.';
+        docMeta.classList.remove('hidden');
+      } else {
+        docMeta.classList.add('hidden');
+      }
+    });
+
+    // Form submission
+    document.getElementById('booking-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const department_id = document.getElementById('department').value;
+      const doctor_id = document.getElementById('doctor').value;
+      const appointment_date = document.getElementById('date').value;
+      const notes = document.getElementById('notes').value.trim();
+      const submitBtn = document.getElementById('submit-btn');
+
+      if (!department_id || !doctor_id || !appointment_date) {
+        showToast('Please select all required fields');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `
+        <svg class="animate-spin h-5 w-5 text-slate-950" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span>Reserving Token...</span>
+      `;
+
+      try {
+        const response = await fetch('/api/appointments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ doctor_id, department_id, appointment_date, notes })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          showToast(result.message, 'success');
+          // Redirect to dashboard after delay
+          setTimeout(() => {
+            window.location.href = '/dashboard.html';
+          }, 2000);
+        } else {
+          showToast(result.message || 'Token generation failed');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `
+            <span>Generate Appointment Token</span>
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          `;
+          lucide.createIcons();
+        }
+      } catch (err) {
+        console.error('Booking error:', err);
+        showToast('Server connection failed. Try again.');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `
+          <span>Generate Appointment Token</span>
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+        `;
+        lucide.createIcons();
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>

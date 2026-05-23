@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Dashboard | DocToken</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- QRCode CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.05), transparent 35%),
+                  radial-gradient(circle at bottom left, rgba(99, 102, 241, 0.05), transparent 35%),
+                  #030712;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-modal {
+      background: rgba(10, 15, 30, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    /* Ticket print layout override */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #print-section, #print-section * {
+        visibility: visible;
+      }
+      #print-section {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        color: #000 !important;
+        background: #fff !important;
+      }
+    }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen">
+
+  <!-- Header Nav -->
+  <nav class="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-white/5 px-6 py-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl shadow-lg">
+          <i data-lucide="stethoscopes" class="w-5 h-5 text-slate-950"></i>
+        </div>
+        <span class="text-lg font-bold tracking-tight bg-gradient-to-r from-white to-emerald-400 bg-clip-text text-transparent">DocToken Dashboard</span>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <span id="user-greeting" class="text-sm font-semibold text-slate-300 hidden md:block">Hello, Patient</span>
+        <button onclick="handleLogout()" class="text-xs font-semibold glass-card border border-white/10 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg transition-colors">
+          Log Out
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-6 py-10">
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-10">
+      <div>
+        <h1 class="text-3xl font-extrabold tracking-tight text-white mb-2">My Appointment Tokens</h1>
+        <p class="text-sm text-slate-400">View details, download slips, and track queue tokens in real-time.</p>
+      </div>
+      <a href="/book-token.html" class="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300">
+        <i data-lucide="plus-circle" class="w-5 h-5"></i> Generate Doctor Token
+      </a>
+    </div>
+
+    <!-- Active Tickets Grid -->
+    <div id="tokens-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Loading skeleton -->
+      <div class="p-6 rounded-2xl glass-card border border-white/5 animate-pulse flex flex-col gap-4">
+        <div class="h-6 w-32 bg-slate-800 rounded"></div>
+        <div class="h-16 w-full bg-slate-800 rounded"></div>
+        <div class="h-10 w-full bg-slate-800 rounded"></div>
+      </div>
+      <div class="p-6 rounded-2xl glass-card border border-white/5 animate-pulse flex flex-col gap-4">
+        <div class="h-6 w-32 bg-slate-800 rounded"></div>
+        <div class="h-16 w-full bg-slate-800 rounded"></div>
+        <div class="h-10 w-full bg-slate-800 rounded"></div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden text-center py-20 max-w-md mx-auto">
+      <div class="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-500">
+        <i data-lucide="calendar-days" class="w-8 h-8"></i>
+      </div>
+      <h3 class="text-xl font-bold text-white mb-2">No Tokens Generated Yet</h3>
+      <p class="text-slate-400 mb-8 text-sm">You do not have any active appointments or doctor tokens booked for today or upcoming dates.</p>
+      <a href="/book-token.html" class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 text-slate-950 font-bold rounded-xl hover:bg-emerald-400 transition-colors">
+        Book Your First Token
+      </a>
+    </div>
+  </main>
+
+  <!-- QR Code Modal (Hidden by Default) -->
+  <div id="qr-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden transition-opacity duration-300">
+    <div class="glass-modal max-w-sm w-full p-8 rounded-3xl text-center shadow-2xl relative">
+      <!-- Close button -->
+      <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors">
+        <i data-lucide="x" class="w-6 h-6"></i>
+      </button>
+
+      <!-- Modal Content to print -->
+      <div id="print-section" class="bg-transparent text-slate-100 p-2">
+        <div class="flex items-center justify-center gap-2 mb-4">
+          <i data-lucide="stethoscopes" class="w-6 h-6 text-emerald-400"></i>
+          <span class="font-extrabold text-white text-lg tracking-tight">DocToken Slip</span>
+        </div>
+        
+        <!-- Giant Token -->
+        <div class="mb-4">
+          <p class="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-1">Appointment Token</p>
+          <h2 id="modal-token-num" class="text-5xl font-black text-emerald-400">#00</h2>
+        </div>
+
+        <div class="w-48 h-48 bg-white p-3 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-inner" id="qrcode-container">
+          <!-- QR target -->
+        </div>
+
+        <!-- Appointment Details -->
+        <div class="space-y-2.5 text-sm border-t border-white/10 pt-4 text-left">
+          <div class="flex justify-between">
+            <span class="text-slate-400">Patient:</span>
+            <span id="modal-patient-name" class="font-bold text-slate-200">-</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Doctor:</span>
+            <span id="modal-doctor-name" class="font-bold text-slate-200">-</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Date:</span>
+            <span id="modal-appointment-date" class="font-bold text-slate-200">-</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Status:</span>
+            <span id="modal-status" class="font-bold uppercase tracking-wider text-emerald-400">-</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action buttons inside modal -->
+      <div class="mt-6 flex gap-3">
+        <button onclick="window.print()" class="flex-1 py-3 bg-slate-900 hover:bg-slate-800 border border-white/10 font-bold rounded-xl transition-all flex items-center justify-center gap-2">
+          <i data-lucide="printer" class="w-4 h-4"></i> Print Pass
+        </button>
+        <button onclick="closeModal()" class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl transition-all">
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full"></div>
+
+  <script>
+    // Authentication guard
+    const token = localStorage.getItem('token');
+    const userJson = localStorage.getItem('user');
+
+    if (!token || !userJson) {
+      window.location.href = '/login.html';
+    }
+
+    let user = {};
+    try {
+      user = JSON.parse(userJson);
+      document.getElementById('user-greeting').innerText = `Hello, ${user.name}`;
+      if (user.role !== 'patient') {
+        // Direct non-patients to their dashboard
+        window.location.href = user.role === 'doctor' ? '/doctor-dashboard.html' : '/admin-dashboard.html';
+      }
+    } catch(e) {
+      handleLogout();
+    }
+
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Toast Utility
+    function showToast(message, type = 'error') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const bgColor = type === 'success' ? 'bg-emerald-950/90 border-emerald-500' : 'bg-rose-950/90 border-rose-500';
+      const textColor = type === 'success' ? 'text-emerald-400' : 'text-rose-400';
+      const icon = type === 'success' ? 'check-circle' : 'alert-circle';
+      
+      toast.className = `p-4 rounded-xl border glass-card backdrop-blur-md flex items-start gap-3 shadow-lg transform translate-y-2 opacity-0 transition-all duration-300 ${bgColor}`;
+      toast.innerHTML = `
+        <div class="${textColor} mt-0.5">
+          <i data-lucide="${icon}" class="w-5 h-5"></i>
+        </div>
+        <div class="text-sm font-semibold text-slate-200">${message}</div>
+      `;
+      
+      container.appendChild(toast);
+      lucide.createIcons();
+      
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 10);
+      
+      setTimeout(() => {
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    function handleLogout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login.html';
+    }
+
+    // Fetch patient appointments
+    async function loadAppointments() {
+      try {
+        const response = await fetch('/api/appointments', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.status === 401) {
+          handleLogout();
+          return;
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+          const grid = document.getElementById('tokens-grid');
+          const empty = document.getElementById('empty-state');
+          
+          grid.innerHTML = ''; // clear loading state
+          
+          if (!result.data || result.data.length === 0) {
+            grid.classList.add('hidden');
+            empty.classList.remove('hidden');
+            return;
+          }
+
+          grid.classList.remove('hidden');
+          empty.classList.add('hidden');
+
+          result.data.forEach(apt => {
+            const card = document.createElement('div');
+            card.className = 'p-6 rounded-2xl glass-card border border-white/5 flex flex-col justify-between hover:border-white/10 transition-all relative overflow-hidden group';
+            
+            // Format Status Badges
+            let statusColor = 'text-amber-400 bg-amber-500/10 border-amber-500/20';
+            if (apt.status === 'confirmed') statusColor = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+            if (apt.status === 'completed') statusColor = 'text-blue-400 bg-blue-500/10 border-blue-500/20';
+            if (apt.status === 'cancelled') statusColor = 'text-rose-400 bg-rose-500/10 border-rose-500/20';
+
+            const formattedDate = new Date(apt.appointment_date).toLocaleDateString('en-US', {
+              weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+            });
+
+            // Action Buttons based on status
+            const isPending = apt.status === 'pending';
+            const actionBtn = isPending 
+              ? `<button onclick="cancelAppointment(${apt.id})" class="text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 px-3.5 py-2 rounded-xl transition-all border border-rose-500/20">Cancel Token</button>`
+              : `<span class="text-xs text-slate-500 italic">No further actions</span>`;
+
+            card.innerHTML = `
+              <!-- Status and Date -->
+              <div class="flex items-center justify-between mb-4">
+                <span class="text-xs font-semibold px-2.5 py-1 rounded-full border ${statusColor} uppercase tracking-wider">${apt.status}</span>
+                <span class="text-xs text-slate-400 flex items-center gap-1"><i data-lucide="calendar" class="w-3.5 h-3.5"></i> ${formattedDate}</span>
+              </div>
+
+              <!-- Main details -->
+              <div class="mb-6">
+                <h4 class="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">Doctor Reference</h4>
+                <p class="text-lg font-bold text-slate-200">${apt.doctors.name}</p>
+                <p class="text-xs text-emerald-400 font-medium mb-4">${apt.departments.name} • Specialist</p>
+
+                <div class="flex items-center justify-between bg-white/5 rounded-xl p-3 border border-white/5 mb-4">
+                  <div>
+                    <p class="text-[10px] uppercase text-slate-500 font-semibold">Your Token</p>
+                    <p class="text-2xl font-black text-white">#${apt.token_number}</p>
+                  </div>
+                  <button onclick='openQRModal(${JSON.stringify(apt).replace(/'/g, "&apos;")})' class="p-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl transition-all flex items-center gap-1.5 font-bold text-xs">
+                    <i data-lucide="qr-code" class="w-4 h-4"></i> View Pass
+                  </button>
+                </div>
+
+                <!-- Live Queue Progression Stats -->
+                <div class="grid grid-cols-2 gap-3 text-xs border-t border-white/5 pt-4">
+                  <div class="p-2.5 rounded-xl bg-white/5 border border-white/5 text-center">
+                    <p class="text-[10px] uppercase text-slate-500 font-semibold mb-0.5">Now Serving</p>
+                    <p class="font-black text-emerald-400 text-sm">${apt.currently_serving ? '#' + apt.currently_serving : 'None (Lobby)'}</p>
+                  </div>
+                  <div class="p-2.5 rounded-xl bg-white/5 border border-white/5 text-center">
+                    <p class="text-[10px] uppercase text-slate-500 font-semibold mb-0.5">Waiting Ahead</p>
+                    <p class="font-black text-slate-200 text-sm">${apt.status === 'pending' ? apt.patients_ahead + ' patients' : '0 patients'}</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Actions footer -->
+              <div class="border-t border-white/5 pt-4 flex items-center justify-between">
+                <span class="text-[10px] text-slate-500">Booked: ${new Date(apt.created_at).toLocaleDateString()}</span>
+                ${actionBtn}
+              </div>
+            `;
+            grid.appendChild(card);
+          });
+          lucide.createIcons();
+        }
+      } catch (err) {
+        console.error('Failed to load appointments', err);
+        showToast('Error retrieving token statistics. Reload page.');
+      }
+    }
+
+    // Cancel appointment action
+    async function cancelAppointment(id) {
+      if (!confirm('Are you sure you want to cancel this appointment and release your token?')) return;
+
+      try {
+        const response = await fetch(`/api/appointments/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ status: 'cancelled' })
+        });
+
+        const result = await response.json();
+        if (response.ok && result.success) {
+          showToast('Appointment token cancelled successfully', 'success');
+          loadAppointments();
+        } else {
+          showToast(result.message || 'Cancellation failed');
+        }
+      } catch (err) {
+        console.error('Cancellation error:', err);
+        showToast('Server connection failed. Try again.');
+      }
+    }
+
+    // QR Code modal trigger
+    let qrcodeInstance = null;
+
+    function openQRModal(apt) {
+      document.getElementById('modal-token-num').innerText = `#${apt.token_number}`;
+      document.getElementById('modal-patient-name').innerText = user.name;
+      document.getElementById('modal-doctor-name').innerText = apt.doctors.name;
+      document.getElementById('modal-status').innerText = apt.status;
+      
+      const formattedDate = new Date(apt.appointment_date).toLocaleDateString('en-US', {
+        weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+      });
+      document.getElementById('modal-appointment-date').innerText = formattedDate;
+
+      // Status indicator coloring
+      const statusEl = document.getElementById('modal-status');
+      statusEl.className = 'font-bold uppercase tracking-wider ' + 
+        (apt.status === 'confirmed' ? 'text-emerald-400' : 
+         apt.status === 'completed' ? 'text-blue-400' : 
+         apt.status === 'cancelled' ? 'text-rose-400' : 'text-amber-400');
+
+      // Clear previous QR
+      const qrcodeContainer = document.getElementById('qrcode-container');
+      qrcodeContainer.innerHTML = '';
+
+      // Generate payload string
+      const qrData = JSON.stringify({
+        appointmentId: apt.id,
+        patientName: user.name,
+        doctorName: apt.doctors.name,
+        date: apt.appointment_date,
+        token: apt.token_number,
+        status: apt.status
+      });
+
+      // Render new QR Code
+      qrcodeInstance = new QRCode(qrcodeContainer, {
+        text: qrData,
+        width: 170,
+        height: 170,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+      });
+
+      // Show Modal
+      const modal = document.getElementById('qr-modal');
+      modal.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('qr-modal');
+      modal.classList.add('hidden');
+    }
+
+    // Reload list on start
+    loadAppointments();
+  </script>
+</body>
+</html>

@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | DocToken</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.05), transparent 35%),
+                  radial-gradient(circle at bottom left, rgba(99, 102, 241, 0.05), transparent 35%),
+                  #030712;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    input, select, textarea {
+      background: rgba(255, 255, 255, 0.03) !important;
+      border: 1px solid rgba(255, 255, 255, 0.08) !important;
+      color: white !important;
+      transition: all 0.2s ease-in-out;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #34d399 !important;
+      box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.15) !important;
+      outline: none;
+    }
+    .tab-btn.active {
+      background: rgba(52, 211, 153, 0.15);
+      border-color: rgba(52, 211, 153, 0.3);
+      color: #34d399;
+    }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen">
+
+  <!-- Header Nav -->
+  <nav class="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-white/5 px-6 py-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl shadow-lg">
+          <i data-lucide="stethoscopes" class="w-5 h-5 text-slate-950 font-bold"></i>
+        </div>
+        <span class="text-lg font-bold tracking-tight bg-gradient-to-r from-white to-emerald-400 bg-clip-text text-transparent">DocToken Admin</span>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 uppercase tracking-wider">System Administrator</span>
+        <button onclick="handleLogout()" class="text-xs font-semibold glass-card border border-white/10 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg transition-colors">
+          Log Out
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto px-6 py-10">
+    <!-- Header tabs control -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 border-b border-white/5 pb-6">
+      <div>
+        <h1 class="text-3xl font-extrabold text-white mb-2">Management Center</h1>
+        <p class="text-sm text-slate-400">Configure clinic lists, doctor rosters, view statistics, and block users.</p>
+      </div>
+
+      <!-- Tab Buttons -->
+      <div class="flex flex-wrap gap-2">
+        <button onclick="switchTab('analytics')" class="tab-btn active px-4 py-2 rounded-xl text-sm font-semibold glass-card border border-white/5 transition-all flex items-center gap-2">
+          <i data-lucide="line-chart" class="w-4 h-4"></i> Stats
+        </button>
+        <button onclick="switchTab('departments')" class="tab-btn px-4 py-2 rounded-xl text-sm font-semibold glass-card border border-white/5 transition-all flex items-center gap-2">
+          <i data-lucide="building" class="w-4 h-4"></i> Departments
+        </button>
+        <button onclick="switchTab('doctors')" class="tab-btn px-4 py-2 rounded-xl text-sm font-semibold glass-card border border-white/5 transition-all flex items-center gap-2">
+          <i data-lucide="user-cog" class="w-4 h-4"></i> Doctors
+        </button>
+        <button onclick="switchTab('users')" class="tab-btn px-4 py-2 rounded-xl text-sm font-semibold glass-card border border-white/5 transition-all flex items-center gap-2">
+          <i data-lucide="users" class="w-4 h-4"></i> Users
+        </button>
+      </div>
+    </div>
+
+    <!-- TABS CONTAINER -->
+    
+    <!-- 1. ANALYTICS PANEL -->
+    <div id="panel-analytics" class="tab-panel space-y-8">
+      <!-- High Level Stats -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="p-6 rounded-2xl glass-card border border-white/5">
+          <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">Total Patients</p>
+          <h3 id="stat-patients" class="text-4xl font-extrabold text-white">0</h3>
+        </div>
+        <div class="p-6 rounded-2xl glass-card border border-white/5">
+          <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">Total Doctors</p>
+          <h3 id="stat-doctors" class="text-4xl font-extrabold text-emerald-400">0</h3>
+        </div>
+        <div class="p-6 rounded-2xl glass-card border border-white/5">
+          <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">Total Departments</p>
+          <h3 id="stat-depts" class="text-4xl font-extrabold text-teal-400">0</h3>
+        </div>
+        <div class="p-6 rounded-2xl glass-card border border-white/5">
+          <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">Total Appointments</p>
+          <h3 id="stat-apts" class="text-4xl font-extrabold text-indigo-400">0</h3>
+        </div>
+      </div>
+
+      <!-- Detail status counts -->
+      <div class="glass-card p-6 rounded-2xl border border-white/5">
+        <h3 class="text-lg font-bold text-white mb-6">Appointment Status Distribution</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 text-center">
+            <span class="text-2xl font-black text-amber-400" id="dist-pending">0</span>
+            <p class="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">Pending</p>
+          </div>
+          <div class="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10 text-center">
+            <span class="text-2xl font-black text-emerald-400" id="dist-confirmed">0</span>
+            <p class="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">Confirmed</p>
+          </div>
+          <div class="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10 text-center">
+            <span class="text-2xl font-black text-blue-400" id="dist-completed">0</span>
+            <p class="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">Completed</p>
+          </div>
+          <div class="p-4 rounded-xl bg-rose-500/5 border border-rose-500/10 text-center">
+            <span class="text-2xl font-black text-rose-400" id="dist-cancelled">0</span>
+            <p class="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">Cancelled</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. DEPARTMENTS PANEL -->
+    <div id="panel-departments" class="tab-panel hidden space-y-6">
+      <div class="grid md:grid-cols-3 gap-6">
+        <!-- Create Dept Form -->
+        <div class="glass-card p-6 rounded-2xl border border-white/5 h-fit">
+          <h3 class="text-lg font-bold text-white mb-4">Add Department</h3>
+          <form id="dept-form" class="space-y-4">
+            <div>
+              <label for="dept-name" class="block text-xs text-slate-400 uppercase tracking-wider font-semibold mb-2">Department Name</label>
+              <input type="text" id="dept-name" placeholder="e.g. Neurology" required class="w-full px-4 py-2.5 rounded-xl text-sm">
+            </div>
+            <div>
+              <label for="dept-desc" class="block text-xs text-slate-400 uppercase tracking-wider font-semibold mb-2">Description</label>
+              <textarea id="dept-desc" rows="3" placeholder="Explain specialization..." class="w-full px-4 py-2.5 rounded-xl text-sm"></textarea>
+            </div>
+            <button type="submit" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-sm transition-colors">
+              Create Department
+            </button>
+          </form>
+        </div>
+
+        <!-- Depts List Grid -->
+        <div class="col-span-2 glass-card p-6 rounded-2xl border border-white/5">
+          <h3 class="text-lg font-bold text-white mb-4">Active Divisions</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead>
+                <tr class="border-b border-white/10 text-slate-400 text-xs font-semibold uppercase">
+                  <th class="py-3">Name</th>
+                  <th class="py-3">Description</th>
+                  <th class="py-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="depts-table-body" class="divide-y divide-white/5">
+                <!-- Dynamic list -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. DOCTORS PANEL -->
+    <div id="panel-doctors" class="tab-panel hidden space-y-6">
+      <div class="grid lg:grid-cols-3 gap-6">
+        <!-- Add/Edit Doctor form -->
+        <div class="glass-card p-6 rounded-2xl border border-white/5 h-fit">
+          <h3 class="text-lg font-bold text-white mb-4" id="doctor-form-title">Add New Doctor</h3>
+          <form id="doctor-form" class="space-y-4">
+            <input type="hidden" id="edit-doc-id">
+            <div>
+              <label for="doc-name" class="block text-xs text-slate-400 uppercase tracking-wider font-semibold mb-2">Full Name</label>
+              <input type="text" id="doc-name" required placeholder="Dr. Sarah Connor" class="w-full px-4 py-2.5 rounded-xl text-sm">
+            </div>
+            <div>
+              <label for="doc-email" class="block text-xs text-slate-400 uppercase tracking-wider font-semibold mb-2">Email Address</label>
+              <input type="email" id="doc-email" required placeholder="sarah@clinic.com" class="w-full px-4 py-2.5 rounded-xl text-sm">
+            </div>
+            <div>
+              <label for="doc-pass" class="block text-xs text-slate-400 uppercase tracking-wider font-semibold mb-2" id="doc-pass-label">Password</label>
+              <input type="password" id="doc-pass" placeholder="••••••••" class="w-full px-4 py-2.5 rounded-xl text-sm">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label for="doc-phone" class="block text-xs text-slate-400 uppercase tracking-wider font-semibold mb-2">Phone</label>
+                <input type="text" id="doc-phone" placeholder="9876543210" class="w-full px-3 py-2.5 rounded-xl text-sm">
+              </div>
+              <div>
+                <label for="doc-dept" class="block text-xs text-slate-400 uppercase tracking-wider font-semibold mb-2">Department</label>
+                <select id="doc-dept" required class="w-full px-3 py-2.5 rounded-xl text-sm">
+                  <!-- Load dynamic -->
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label for="doc-specialization" class="block text-xs text-slate-400 uppercase tracking-wider font-semibold mb-2">Specialty</label>
+                <input type="text" id="doc-specialization" required placeholder="e.g. Brain Surgery" class="w-full px-3 py-2.5 rounded-xl text-sm">
+              </div>
+              <div>
+                <label for="doc-exp" class="block text-xs text-slate-400 uppercase tracking-wider font-semibold mb-2">Exp (Years)</label>
+                <input type="number" id="doc-exp" min="0" placeholder="5" class="w-full px-3 py-2.5 rounded-xl text-sm">
+              </div>
+            </div>
+            <div>
+              <label for="doc-bio" class="block text-xs text-slate-400 uppercase tracking-wider font-semibold mb-2">Bio / Experience details</label>
+              <textarea id="doc-bio" rows="2" placeholder="Brief experience summary..." class="w-full px-4 py-2.5 rounded-xl text-sm"></textarea>
+            </div>
+            
+            <div class="flex gap-2">
+              <button type="button" onclick="cancelDoctorEdit()" id="cancel-doc-edit-btn" class="hidden flex-1 py-2.5 bg-slate-900 border border-white/10 hover:bg-slate-800 text-slate-400 font-bold rounded-xl text-sm transition-colors">Cancel</button>
+              <button type="submit" id="doc-form-submit" class="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-sm transition-colors">
+                Save Doctor Profile
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Doctors List -->
+        <div class="lg:col-span-2 glass-card p-6 rounded-2xl border border-white/5">
+          <h3 class="text-lg font-bold text-white mb-4">Doctor Roster</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead>
+                <tr class="border-b border-white/10 text-slate-400 text-xs font-semibold uppercase">
+                  <th class="py-3">Name</th>
+                  <th class="py-3">Department</th>
+                  <th class="py-3">Specialty</th>
+                  <th class="py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="doctors-table-body" class="divide-y divide-white/5">
+                <!-- Load dynamic -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. USERS PANEL -->
+    <div id="panel-users" class="tab-panel hidden space-y-6">
+      <div class="glass-card p-6 rounded-2xl border border-white/5">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-lg font-bold text-white">Registered Patient Accounts</h3>
+          <!-- Search box -->
+          <input type="text" id="user-search" placeholder="Search by name or email..." oninput="renderUsers()" class="px-4 py-2 rounded-xl text-sm max-w-xs">
+        </div>
+        
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="border-b border-white/10 text-slate-400 text-xs font-semibold uppercase">
+                <th class="py-3">Name</th>
+                <th class="py-3">Email</th>
+                <th class="py-3">Phone</th>
+                <th class="py-3">Verified</th>
+                <th class="py-3 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body" class="divide-y divide-white/5">
+              <!-- Load dynamic -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full"></div>
+
+  <script>
+    // Guard
+    const token = localStorage.getItem('token');
+    const userJson = localStorage.getItem('user');
+
+    if (!token || !userJson) {
+      window.location.href = '/login.html';
+    }
+
+    try {
+      const admin = JSON.parse(userJson);
+      if (admin.role !== 'admin') {
+        window.location.href = admin.role === 'doctor' ? '/doctor-dashboard.html' : '/dashboard.html';
+      }
+    } catch(e) {
+      handleLogout();
+    }
+
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Toast Utility
+    function showToast(message, type = 'error') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const bgColor = type === 'success' ? 'bg-emerald-950/90 border-emerald-500' : 'bg-rose-950/90 border-rose-500';
+      const textColor = type === 'success' ? 'text-emerald-400' : 'text-rose-400';
+      const icon = type === 'success' ? 'check-circle' : 'alert-circle';
+      
+      toast.className = `p-4 rounded-xl border glass-card backdrop-blur-md flex items-start gap-3 shadow-lg transform translate-y-2 opacity-0 transition-all duration-300 ${bgColor}`;
+      toast.innerHTML = `
+        <div class="${textColor} mt-0.5">
+          <i data-lucide="${icon}" class="w-5 h-5"></i>
+        </div>
+        <div class="text-sm font-semibold text-slate-200">${message}</div>
+      `;
+      
+      container.appendChild(toast);
+      lucide.createIcons();
+      
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 10);
+      
+      setTimeout(() => {
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    function handleLogout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login.html';
+    }
+
+    // TAB NAVIGATION SWITCHER
+    function switchTab(tabId) {
+      // Buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+
+      // Panels
+      document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
+      document.getElementById(`panel-${tabId}`).classList.remove('hidden');
+
+      // Trigger loads
+      if (tabId === 'analytics') loadStats();
+      if (tabId === 'departments') loadDepartments();
+      if (tabId === 'doctors') loadDoctors();
+      if (tabId === 'users') loadUsers();
+    }
+
+    // --- ANALYTICS CODE ---
+    async function loadStats() {
+      try {
+        const response = await fetch('/api/admin/stats', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          const stats = result.data;
+          document.getElementById('stat-patients').innerText = stats.patients;
+          document.getElementById('stat-doctors').innerText = stats.doctors;
+          document.getElementById('stat-depts').innerText = stats.departments;
+          document.getElementById('stat-apts').innerText = stats.appointments.total;
+
+          document.getElementById('dist-pending').innerText = stats.appointments.pending;
+          document.getElementById('dist-confirmed').innerText = stats.appointments.confirmed;
+          document.getElementById('dist-completed').innerText = stats.appointments.completed;
+          document.getElementById('dist-cancelled').innerText = stats.appointments.cancelled;
+        }
+      } catch (err) {
+        console.error('Stats loading failed:', err);
+      }
+    }
+
+    // --- DEPARTMENTS CODE ---
+    let allDepts = [];
+    async function loadDepartments() {
+      try {
+        const response = await fetch('/api/doctors/departments');
+        const result = await response.json();
+        if (result.success && result.data) {
+          allDepts = result.data;
+          renderDepartments();
+          // Also sync selector in doctor form
+          syncDoctorDeptDropdown();
+        }
+      } catch (err) {
+        console.error('Depts loading failed:', err);
+      }
+    }
+
+    function renderDepartments() {
+      const tbody = document.getElementById('depts-table-body');
+      tbody.innerHTML = '';
+      allDepts.forEach(dept => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="py-4 font-semibold text-slate-200">${dept.name}</td>
+          <td class="py-4 text-slate-400 text-xs">${dept.description || 'No description'}</td>
+          <td class="py-4 text-right">
+            <button onclick="deleteDepartment(${dept.id})" class="text-rose-400 hover:text-rose-300 font-semibold text-xs flex items-center gap-1 ml-auto">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      lucide.createIcons();
+    }
+
+    document.getElementById('dept-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('dept-name').value.trim();
+      const description = document.getElementById('dept-desc').value.trim();
+
+      try {
+        const response = await fetch('/api/admin/departments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ name, description })
+        });
+        const result = await response.json();
+        if (response.ok && result.success) {
+          showToast('Department created successfully', 'success');
+          document.getElementById('dept-form').reset();
+          loadDepartments();
+        } else {
+          showToast(result.message || 'Creation failed');
+        }
+      } catch (err) {
+        showToast('Server error creating department');
+      }
+    });
+
+    async function deleteDepartment(id) {
+      if (!confirm('Are you sure you want to delete this department? Doing so might affect assigned doctors.')) return;
+      try {
+        const response = await fetch(`/api/admin/departments/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const result = await response.json();
+        if (response.ok && result.success) {
+          showToast('Department deleted', 'success');
+          loadDepartments();
+        } else {
+          showToast(result.message);
+        }
+      } catch (err) {
+        showToast('Server error deleting department');
+      }
+    }
+
+    function syncDoctorDeptDropdown() {
+      const select = document.getElementById('doc-dept');
+      select.innerHTML = '<option value="" disabled selected>Select Department</option>';
+      allDepts.forEach(dept => {
+        const opt = document.createElement('option');
+        opt.value = dept.id;
+        opt.innerText = dept.name;
+        select.appendChild(opt);
+      });
+    }
+
+    // --- DOCTORS CODE ---
+    let allDoctors = [];
+    async function loadDoctors() {
+      try {
+        const response = await fetch('/api/doctors');
+        const result = await response.json();
+        if (result.success && result.data) {
+          allDoctors = result.data;
+          renderDoctors();
+        }
+      } catch(err) {
+        console.error('Doctors fetch failed:', err);
+      }
+    }
+
+    function renderDoctors() {
+      const tbody = document.getElementById('doctors-table-body');
+      tbody.innerHTML = '';
+      allDoctors.forEach(doc => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="py-4">
+            <p class="font-semibold text-slate-200">${doc.name}</p>
+            <p class="text-[10px] text-slate-500">${doc.email}</p>
+          </td>
+          <td class="py-4 text-xs text-slate-300">${doc.departments ? doc.departments.name : 'None'}</td>
+          <td class="py-4 text-xs text-emerald-400 font-semibold">${doc.specialization}</td>
+          <td class="py-4 text-right flex gap-3 justify-end items-center">
+            <button onclick='editDoctor(${JSON.stringify(doc).replace(/'/g, "&apos;")})' class="text-emerald-400 hover:text-emerald-300 font-semibold text-xs flex items-center gap-1">
+              <i data-lucide="edit" class="w-3.5 h-3.5"></i> Edit
+            </button>
+            <button onclick="deleteDoctor(${doc.id})" class="text-rose-400 hover:text-rose-300 font-semibold text-xs flex items-center gap-1">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      lucide.createIcons();
+    }
+
+    document.getElementById('doctor-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const docId = document.getElementById('edit-doc-id').value;
+      const name = document.getElementById('doc-name').value.trim();
+      const email = document.getElementById('doc-email').value.trim();
+      const password = document.getElementById('doc-pass').value;
+      const phone = document.getElementById('doc-phone').value.trim();
+      const department_id = document.getElementById('doc-dept').value;
+      const specialization = document.getElementById('doc-specialization').value.trim();
+      const experience = document.getElementById('doc-exp').value;
+      const bio = document.getElementById('doc-bio').value.trim();
+
+      const docData = { name, email, phone, department_id, specialization, experience, bio };
+      if (password) docData.password = password;
+
+      const isEdit = !!docId;
+      const url = isEdit ? `/api/doctors/${docId}` : '/api/doctors';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      try {
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(docData)
+        });
+
+        const result = await response.json();
+        if (response.ok && result.success) {
+          showToast(isEdit ? 'Doctor updated successfully' : 'Doctor created successfully', 'success');
+          cancelDoctorEdit();
+          loadDoctors();
+        } else {
+          showToast(result.message || 'Save failed');
+        }
+      } catch(err) {
+        showToast('Server connection error saving doctor');
+      }
+    });
+
+    function editDoctor(doc) {
+      document.getElementById('edit-doc-id').value = doc.id;
+      document.getElementById('doc-name').value = doc.name;
+      document.getElementById('doc-email').value = doc.email;
+      document.getElementById('doc-pass').value = ''; // leave blank unless change
+      document.getElementById('doc-pass-label').innerText = 'New Password (Optional)';
+      document.getElementById('doc-phone').value = doc.phone || '';
+      document.getElementById('doc-dept').value = doc.department_id || '';
+      document.getElementById('doc-specialization').value = doc.specialization;
+      document.getElementById('doc-exp').value = doc.experience || 0;
+      document.getElementById('doc-bio').value = doc.bio || '';
+
+      document.getElementById('doctor-form-title').innerText = 'Edit Doctor Profile';
+      document.getElementById('cancel-doc-edit-btn').classList.remove('hidden');
+    }
+
+    function cancelDoctorEdit() {
+      document.getElementById('doctor-form').reset();
+      document.getElementById('edit-doc-id').value = '';
+      document.getElementById('doctor-form-title').innerText = 'Add New Doctor';
+      document.getElementById('doc-pass-label').innerText = 'Password';
+      document.getElementById('cancel-doc-edit-btn').classList.add('hidden');
+    }
+
+    async function deleteDoctor(id) {
+      if (!confirm('Are you sure you want to delete this doctor? All active appointments will be lost.')) return;
+      try {
+        const response = await fetch(`/api/doctors/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const result = await response.json();
+        if (response.ok && result.success) {
+          showToast('Doctor deleted', 'success');
+          loadDoctors();
+        } else {
+          showToast(result.message);
+        }
+      } catch (err) {
+        showToast('Server error deleting doctor');
+      }
+    }
+
+    // --- USERS CODE ---
+    let allUsers = [];
+    async function loadUsers() {
+      try {
+        const response = await fetch('/api/admin/users', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const result = await response.json();
+        if (result.success && result.data) {
+          allUsers = result.data;
+          renderUsers();
+        }
+      } catch(err) {
+        console.error('Users load failed:', err);
+      }
+    }
+
+    function renderUsers() {
+      const query = document.getElementById('user-search').value.toLowerCase().trim();
+      const tbody = document.getElementById('users-table-body');
+      tbody.innerHTML = '';
+
+      // Filter patients out (skip showing other admins)
+      const filtered = allUsers.filter(u => {
+        const matchSearch = u.name.toLowerCase().includes(query) || u.email.toLowerCase().includes(query);
+        return matchSearch && u.role === 'patient';
+      });
+
+      filtered.forEach(u => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="py-4 font-semibold text-slate-200">${u.name}</td>
+          <td class="py-4 text-xs text-slate-400">${u.email}</td>
+          <td class="py-4 text-xs text-slate-400">${u.phone || 'No phone'}</td>
+          <td class="py-4 text-xs">
+            <span class="px-2 py-0.5 rounded-full border text-[10px] uppercase font-semibold ${u.is_verified ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20'}">
+              ${u.is_verified ? 'Verified' : 'Unverified'}
+            </span>
+          </td>
+          <td class="py-4 text-right">
+            <button onclick="deleteUser(${u.id})" class="text-rose-400 hover:text-rose-300 font-semibold text-xs flex items-center gap-1 ml-auto">
+              <i data-lucide="user-minus" class="w-3.5 h-3.5"></i> Delete/Block
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      lucide.createIcons();
+    }
+
+    async function deleteUser(id) {
+      if (!confirm('Are you sure you want to block/delete this patient account?')) return;
+      try {
+        const response = await fetch(`/api/admin/users/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const result = await response.json();
+        if (response.ok && result.success) {
+          showToast('User deleted', 'success');
+          loadUsers();
+        } else {
+          showToast(result.message);
+        }
+      } catch (err) {
+        showToast('Server error deleting user');
+      }
+    }
+
+    // Default load stats
+    loadStats();
+  </script>
+</body>
+</html>

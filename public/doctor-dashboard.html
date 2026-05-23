@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctor Dashboard | DocToken</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.05), transparent 35%),
+                  radial-gradient(circle at bottom left, rgba(99, 102, 241, 0.05), transparent 35%),
+                  #030712;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    input, select {
+      background: rgba(255, 255, 255, 0.03) !important;
+      border: 1px solid rgba(255, 255, 255, 0.08) !important;
+      color: white !important;
+      transition: all 0.2s ease-in-out;
+    }
+    input:focus, select:focus {
+      border-color: #34d399 !important;
+      box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.15) !important;
+      outline: none;
+    }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen">
+
+  <!-- Header -->
+  <nav class="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-white/5 px-6 py-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl shadow-lg">
+          <i data-lucide="stethoscopes" class="w-5 h-5 text-slate-950 font-bold"></i>
+        </div>
+        <span class="text-lg font-bold tracking-tight bg-gradient-to-r from-white to-emerald-400 bg-clip-text text-transparent">DocToken Portal</span>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <span id="doctor-name" class="text-sm font-semibold text-emerald-400">Loading...</span>
+        <button onclick="handleLogout()" class="text-xs font-semibold glass-card border border-white/10 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg transition-colors">
+          Log Out
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto px-6 py-10">
+    <!-- Main Intro -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+      <div>
+        <h1 class="text-3xl font-extrabold text-white mb-2">Doctor Panel</h1>
+        <p class="text-sm text-slate-400">Manage patient queues, accept checkups, and check stats.</p>
+      </div>
+      
+      <!-- Date selector -->
+      <div class="flex items-center gap-3">
+        <label for="filter-date" class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Queue Date:</label>
+        <input type="date" id="filter-date" class="px-4 py-2.5 rounded-xl text-sm bg-slate-900 border-slate-800">
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="p-4 rounded-2xl glass-card border border-white/5">
+        <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Pending Requests</p>
+        <h3 id="stat-pending" class="text-2xl font-extrabold text-amber-400">0</h3>
+      </div>
+      <div class="p-4 rounded-2xl glass-card border border-white/5">
+        <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Confirmed Patients</p>
+        <h3 id="stat-confirmed" class="text-2xl font-extrabold text-emerald-400">0</h3>
+      </div>
+      <div class="p-4 rounded-2xl glass-card border border-white/5">
+        <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Completed Today</p>
+        <h3 id="stat-completed" class="text-2xl font-extrabold text-blue-400">0</h3>
+      </div>
+      <div class="p-4 rounded-2xl glass-card border border-white/5">
+        <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Cancelled</p>
+        <h3 id="stat-cancelled" class="text-2xl font-extrabold text-rose-400">0</h3>
+      </div>
+    </div>
+
+    <!-- Live Consultation Panel -->
+    <div class="p-6 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-950 border border-emerald-500/20 mb-8 flex flex-col md:flex-row gap-6 items-center justify-between shadow-xl relative overflow-hidden">
+      <!-- Glow decoration -->
+      <div class="absolute -right-10 -top-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl"></div>
+      
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-400">
+          <i data-lucide="play-circle" class="w-8 h-8"></i>
+        </div>
+        <div>
+          <p class="text-xs uppercase text-slate-500 font-bold tracking-wider mb-0.5">Currently Serving</p>
+          <h2 id="active-serving-title" class="text-xl font-extrabold text-white">None (Lobby Empty)</h2>
+        </div>
+      </div>
+
+      <div class="w-full md:w-auto flex flex-col sm:flex-row items-center gap-4">
+        <div class="text-center sm:text-right hidden sm:block">
+          <p class="text-[10px] uppercase text-slate-500 font-semibold mb-0.5">Next Patient</p>
+          <p id="next-up-badge" class="text-sm font-bold text-slate-300">None</p>
+        </div>
+        <button id="call-next-btn" onclick="handleCallNext()" class="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 font-bold rounded-xl text-sm hover:shadow-lg hover:shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-2">
+          <i data-lucide="user-plus" class="w-4 h-4"></i> Call Next Patient
+        </button>
+      </div>
+    </div>
+
+    <!-- Search / Actions Bar -->
+    <div class="p-4 rounded-2xl glass-card border border-white/5 mb-8 flex flex-col md:flex-row gap-4 items-center justify-between">
+      <div class="relative w-full md:max-w-md">
+        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 pointer-events-none">
+          <i data-lucide="search" class="w-4 h-4"></i>
+        </span>
+        <input type="text" id="search-input" placeholder="Search by patient name or token #..."
+          class="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-slate-900 border-slate-800">
+      </div>
+
+      <div class="flex gap-2 w-full md:w-auto">
+        <select id="status-filter" class="w-full md:w-44 px-3 py-2.5 rounded-xl text-sm bg-slate-900 border-slate-800">
+          <option value="">All Statuses</option>
+          <option value="pending">Pending</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <button onclick="loadQueue()" class="px-4 py-2.5 bg-emerald-500 text-slate-950 font-bold rounded-xl text-sm hover:bg-emerald-400 transition-colors flex items-center gap-2">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Patient queue grid -->
+    <div id="queue-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Loading indicator -->
+      <div class="col-span-full text-center py-12 text-slate-400">Loading patients queue...</div>
+    </div>
+
+    <!-- Empty state -->
+    <div id="empty-queue" class="hidden text-center py-20 max-w-md mx-auto">
+      <div class="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-500">
+        <i data-lucide="calendar-x" class="w-8 h-8"></i>
+      </div>
+      <h3 class="text-xl font-bold text-white mb-2">No Appointments Found</h3>
+      <p class="text-slate-400 text-sm">There are no token entries scheduled for this doctor on the selected date.</p>
+    </div>
+  </main>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full"></div>
+
+  <script>
+    // Auth check
+    const token = localStorage.getItem('token');
+    const userJson = localStorage.getItem('user');
+
+    if (!token || !userJson) {
+      window.location.href = '/login.html';
+    }
+
+    let doctor = {};
+    try {
+      doctor = JSON.parse(userJson);
+      if (doctor.role !== 'doctor') {
+        window.location.href = doctor.role === 'admin' ? '/admin-dashboard.html' : '/dashboard.html';
+      }
+      document.getElementById('doctor-name').innerText = `Dr. ${doctor.name}`;
+    } catch(e) {
+      handleLogout();
+    }
+
+    // Set filter date default to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('filter-date').value = today;
+
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Toast utility
+    function showToast(message, type = 'error') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const bgColor = type === 'success' ? 'bg-emerald-950/90 border-emerald-500' : 'bg-rose-950/90 border-rose-500';
+      const textColor = type === 'success' ? 'text-emerald-400' : 'text-rose-400';
+      const icon = type === 'success' ? 'check-circle' : 'alert-circle';
+      
+      toast.className = `p-4 rounded-xl border glass-card backdrop-blur-md flex items-start gap-3 shadow-lg transform translate-y-2 opacity-0 transition-all duration-300 ${bgColor}`;
+      toast.innerHTML = `
+        <div class="${textColor} mt-0.5">
+          <i data-lucide="${icon}" class="w-5 h-5"></i>
+        </div>
+        <div class="text-sm font-semibold text-slate-200">${message}</div>
+      `;
+      
+      container.appendChild(toast);
+      lucide.createIcons();
+      
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 10);
+      
+      setTimeout(() => {
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    function handleLogout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login.html';
+    }
+
+    let allAppointments = [];
+
+    // Load queue list
+    async function loadQueue() {
+      const dateVal = document.getElementById('filter-date').value;
+      const statusFilter = document.getElementById('status-filter').value;
+      
+      let url = `/api/appointments?`;
+      if (dateVal) url += `date=${dateVal}&`;
+      if (statusFilter) url += `status=${statusFilter}`;
+
+      try {
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.status === 401) {
+          handleLogout();
+          return;
+        }
+
+        const result = await response.json();
+        const container = document.getElementById('queue-container');
+        const empty = document.getElementById('empty-queue');
+
+        if (result.success) {
+          allAppointments = result.data || [];
+          renderQueue();
+          calculateStats();
+          updateConsultationPanel();
+        } else {
+          showToast(result.message || 'Failed to fetch queue data');
+        }
+      } catch (err) {
+        console.error('Queue load failure:', err);
+        showToast('Error connecting to the server');
+      }
+    }
+
+    // Render appointments to UI
+    function renderQueue() {
+      const query = document.getElementById('search-input').value.toLowerCase().trim();
+      const container = document.getElementById('queue-container');
+      const empty = document.getElementById('empty-queue');
+      
+      container.innerHTML = '';
+
+      // Client-side search matching patient name or token number
+      const filtered = allAppointments.filter(apt => {
+        const nameMatch = apt.users.name.toLowerCase().includes(query);
+        const tokenMatch = apt.token_number.toString() === query || `#${apt.token_number}` === query;
+        return nameMatch || tokenMatch;
+      });
+
+      if (filtered.length === 0) {
+        container.classList.add('hidden');
+        empty.classList.remove('hidden');
+        return;
+      }
+
+      container.classList.remove('hidden');
+      empty.classList.add('hidden');
+
+      filtered.forEach(apt => {
+        const card = document.createElement('div');
+        card.className = 'p-6 rounded-2xl glass-card border border-white/5 flex flex-col justify-between hover:border-white/10 transition-all';
+        
+        let statusBadge = '';
+        let statusColor = 'text-amber-400 bg-amber-500/10 border-amber-500/20';
+        if (apt.status === 'confirmed') statusColor = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+        if (apt.status === 'completed') statusColor = 'text-blue-400 bg-blue-500/10 border-blue-500/20';
+        if (apt.status === 'cancelled') statusColor = 'text-rose-400 bg-rose-500/10 border-rose-500/20';
+
+        // Action items
+        let actionButtons = '';
+        if (apt.status === 'pending') {
+          actionButtons = `
+            <div class="flex gap-2 w-full mt-4">
+              <button onclick="updateStatus(${apt.id}, 'confirmed')" class="flex-1 text-xs py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl transition-colors">Accept</button>
+              <button onclick="updateStatus(${apt.id}, 'cancelled')" class="flex-1 text-xs py-2 bg-rose-950/20 hover:bg-rose-950/40 text-rose-400 border border-rose-500/20 font-semibold rounded-xl transition-colors">Reject</button>
+            </div>
+          `;
+        } else if (apt.status === 'confirmed') {
+          actionButtons = `
+            <div class="flex gap-2 w-full mt-4">
+              <button onclick="updateStatus(${apt.id}, 'completed')" class="flex-1 text-xs py-2.5 bg-blue-500 hover:bg-blue-400 text-slate-950 font-bold rounded-xl transition-colors flex items-center justify-center gap-1">
+                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Mark Completed
+              </button>
+              <button onclick="updateStatus(${apt.id}, 'cancelled')" class="text-xs px-3 bg-slate-900 border border-white/5 hover:bg-slate-800 text-slate-400 font-semibold rounded-xl transition-colors">Cancel</button>
+            </div>
+          `;
+        } else {
+          actionButtons = `
+            <div class="mt-4 py-2 border border-dashed border-white/5 rounded-xl text-center text-xs text-slate-500 uppercase tracking-widest font-semibold bg-white/5">
+              Closed
+            </div>
+          `;
+        }
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-[10px] font-semibold px-2.5 py-1 rounded-full border ${statusColor} uppercase tracking-wider">${apt.status}</span>
+              <span class="text-xs font-black text-slate-400">Token #${apt.token_number}</span>
+            </div>
+            
+            <h4 class="text-lg font-bold text-slate-200">${apt.users.name}</h4>
+            <p class="text-xs text-slate-400 flex items-center gap-1.5 mt-1">
+              <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-500"></i> ${apt.users.phone || 'No phone'}
+            </p>
+
+            <div class="mt-4 p-3 rounded-xl bg-white/5 border border-white/5 text-xs text-slate-300">
+              <p class="font-bold text-slate-400 uppercase text-[9px] tracking-wider mb-1">Symptoms/Notes</p>
+              <p class="leading-relaxed italic">${apt.notes || 'No symptoms/notes provided.'}</p>
+            </div>
+          </div>
+
+          ${actionButtons}
+        `;
+        container.appendChild(card);
+      });
+      lucide.createIcons();
+    }
+
+    // Update status
+    async function updateStatus(id, status) {
+      try {
+        const response = await fetch(`/api/appointments/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ status })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          showToast(`Token status updated to: ${status}`, 'success');
+          loadQueue();
+        } else {
+          showToast(result.message || 'Status change failed');
+        }
+      } catch (err) {
+        console.error('Update status error:', err);
+        showToast('Server update failed. Try again.');
+      }
+    }
+
+    // Calculate count categories
+    function calculateStats() {
+      const stats = { pending: 0, confirmed: 0, completed: 0, cancelled: 0 };
+      allAppointments.forEach(apt => {
+        if (stats[apt.status] !== undefined) {
+          stats[apt.status]++;
+        }
+      });
+
+      document.getElementById('stat-pending').innerText = stats.pending;
+      document.getElementById('stat-confirmed').innerText = stats.confirmed;
+      document.getElementById('stat-completed').innerText = stats.completed;
+      document.getElementById('stat-cancelled').innerText = stats.cancelled;
+    }
+
+    // Update Live Consultation Panel UI states
+    function updateConsultationPanel() {
+      const activeApt = allAppointments.find(apt => apt.status === 'confirmed');
+      const nextPending = allAppointments.find(apt => apt.status === 'pending');
+      
+      const titleEl = document.getElementById('active-serving-title');
+      const nextBadge = document.getElementById('next-up-badge');
+      const btn = document.getElementById('call-next-btn');
+      
+      if (activeApt) {
+        titleEl.innerHTML = `<span class="text-emerald-400 font-black">Token #${activeApt.token_number}</span> - ${activeApt.users.name}`;
+      } else {
+        titleEl.innerText = 'None (Waiting to start)';
+      }
+      
+      if (nextPending) {
+        nextBadge.innerText = `Token #${nextPending.token_number} (${nextPending.users.name})`;
+        btn.disabled = false;
+        btn.className = "w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 font-bold rounded-xl text-sm hover:shadow-lg hover:shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer";
+        btn.innerHTML = activeApt 
+          ? `<i data-lucide="check-square" class="w-4 h-4"></i> Complete & Call Next (#${nextPending.token_number})`
+          : `<i data-lucide="user-plus" class="w-4 h-4"></i> Call Next (#${nextPending.token_number})`;
+      } else {
+        nextBadge.innerText = 'No pending patients';
+        if (activeApt) {
+          btn.disabled = false;
+          btn.className = "w-full sm:w-auto px-6 py-3.5 bg-blue-500 hover:bg-blue-400 text-slate-950 font-bold rounded-xl text-sm active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer";
+          btn.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i> Complete Active Patient`;
+        } else {
+          btn.disabled = true;
+          btn.className = "w-full sm:w-auto px-6 py-3.5 bg-slate-800 text-slate-500 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 cursor-not-allowed";
+          btn.innerHTML = `<i data-lucide="slash" class="w-4 h-4"></i> Queue Empty`;
+        }
+      }
+      lucide.createIcons();
+    }
+
+    // Handles the single click transition: complete active, start next
+    async function handleCallNext() {
+      const activeApt = allAppointments.find(apt => apt.status === 'confirmed');
+      const nextPending = allAppointments.find(apt => apt.status === 'pending');
+      
+      try {
+        if (activeApt) {
+          // 1. Complete current active patient
+          await fetch(`/api/appointments/${activeApt.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ status: 'completed' })
+          });
+        }
+        
+        if (nextPending) {
+          // 2. Call next pending patient
+          const response = await fetch(`/api/appointments/${nextPending.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ status: 'confirmed' })
+          });
+
+          const result = await response.json();
+          if (response.ok && result.success) {
+            showToast(`Called Token #${nextPending.token_number} (${nextPending.users.name})`, 'success');
+          } else {
+            showToast(result.message || 'Failed to call next patient');
+          }
+        } else {
+          showToast('All patients examined. Queue is empty!', 'success');
+        }
+        
+        loadQueue();
+      } catch (err) {
+        console.error('Queue advance error:', err);
+        showToast('Server update failed');
+      }
+    }
+
+    // Register event listeners
+    document.getElementById('filter-date').addEventListener('change', loadQueue);
+    document.getElementById('status-filter').addEventListener('change', loadQueue);
+    document.getElementById('search-input').addEventListener('input', renderQueue);
+
+    // Initial load
+    loadQueue();
+  </script>
+</body>
+</html>

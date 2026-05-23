@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify OTP | DocToken</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.06), transparent 35%),
+                  radial-gradient(circle at bottom left, rgba(99, 102, 241, 0.06), transparent 35%),
+                  #030712;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .otp-input {
+      background: rgba(255, 255, 255, 0.03) !important;
+      border: 1px solid rgba(255, 255, 255, 0.08) !important;
+      transition: all 0.2s ease-in-out;
+      text-align: center;
+      font-weight: 700;
+      font-size: 1.5rem;
+    }
+    .otp-input:focus {
+      border-color: #34d399 !important;
+      box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.15) !important;
+      outline: none;
+    }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen flex items-center justify-center p-4">
+
+  <!-- Main panel -->
+  <div class="max-w-md w-full glass-card p-8 rounded-3xl shadow-2xl relative overflow-hidden text-center">
+    <!-- Icon header -->
+    <div class="mx-auto w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-400 mb-6 animate-bounce">
+      <i data-lucide="shield-check" class="w-7 h-7"></i>
+    </div>
+
+    <!-- Header -->
+    <div class="mb-8">
+      <h2 class="text-2xl font-bold tracking-tight text-white mb-2 font-extrabold">Enter Verification Code</h2>
+      <p class="text-sm text-slate-400">We've sent a 6-digit OTP to your registered email address:</p>
+      <p id="target-email" class="text-sm text-emerald-400 font-semibold mt-1">loading...</p>
+    </div>
+
+    <!-- OTP Code Inputs -->
+    <form id="otp-form" class="space-y-6">
+      <div class="flex justify-between gap-2 max-w-xs mx-auto" id="otp-inputs-container">
+        <input type="text" maxlength="1" class="otp-input w-12 h-12 rounded-xl text-white" required autofocus>
+        <input type="text" maxlength="1" class="otp-input w-12 h-12 rounded-xl text-white" required>
+        <input type="text" maxlength="1" class="otp-input w-12 h-12 rounded-xl text-white" required>
+        <input type="text" maxlength="1" class="otp-input w-12 h-12 rounded-xl text-white" required>
+        <input type="text" maxlength="1" class="otp-input w-12 h-12 rounded-xl text-white" required>
+        <input type="text" maxlength="1" class="otp-input w-12 h-12 rounded-xl text-white" required>
+      </div>
+
+      <!-- Expiry Countdown Timer -->
+      <div class="text-xs text-slate-400 flex items-center justify-center gap-1.5">
+        <i data-lucide="clock" class="w-3.5 h-3.5 text-rose-400"></i>
+        <span>Code expires in:</span>
+        <span id="countdown" class="font-bold text-rose-400">05:00</span>
+      </div>
+
+      <!-- Verify Button -->
+      <button type="submit" id="submit-btn" class="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:brightness-110 text-slate-950 font-bold rounded-xl transition-all duration-300 flex items-center justify-center gap-2">
+        <span>Verify Code</span>
+        <i data-lucide="check" class="w-4 h-4"></i>
+      </button>
+    </form>
+
+    <!-- Resend Link -->
+    <div class="mt-8 text-sm text-slate-400">
+      Didn't receive the OTP? 
+      <button id="resend-btn" onclick="handleResend()" class="text-emerald-400 hover:text-emerald-300 font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+        Resend Code
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full"></div>
+
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Get email from URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const emailParam = urlParams.get('email');
+
+    if (!emailParam) {
+      document.getElementById('target-email').innerText = 'No email supplied. Redirecting...';
+      setTimeout(() => window.location.href = '/signup.html', 2000);
+    } else {
+      document.getElementById('target-email').innerText = emailParam;
+    }
+
+    // OTP auto-advance/backspace handling
+    const inputs = document.querySelectorAll('#otp-inputs-container input');
+    inputs.forEach((input, index) => {
+      input.addEventListener('keyup', (e) => {
+        if (e.key >= 0 && e.key <= 9) {
+          if (index < inputs.length - 1) {
+            inputs[index + 1].focus();
+          }
+        } else if (e.key === 'Backspace') {
+          if (index > 0) {
+            inputs[index - 1].focus();
+          }
+        }
+      });
+
+      // Handle paste
+      input.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const data = e.clipboardData.getData('text').trim();
+        if (data.length === 6 && /^\d+$/.test(data)) {
+          inputs.forEach((inp, idx) => {
+            inp.value = data[idx];
+          });
+          inputs[5].focus();
+        }
+      });
+    });
+
+    // Countdown Timer logic
+    let secondsLeft = 300; // 5 mins
+    const countdownEl = document.getElementById('countdown');
+    const resendBtn = document.getElementById('resend-btn');
+
+    // Disable resend initially
+    resendBtn.disabled = true;
+
+    const timer = setInterval(() => {
+      secondsLeft--;
+      const mins = Math.floor(secondsLeft / 60).toString().padStart(2, '0');
+      const secs = (secondsLeft % 60).toString().padStart(2, '0');
+      countdownEl.innerText = `${mins}:${secs}`;
+
+      if (secondsLeft <= 0) {
+        clearInterval(timer);
+        countdownEl.innerText = '00:00';
+        resendBtn.disabled = false;
+        showToast('OTP code has expired. Please request a new code.', 'error');
+      }
+    }, 1000);
+
+    // Toast Utility
+    function showToast(message, type = 'error') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const bgColor = type === 'success' ? 'bg-emerald-950/90 border-emerald-500' : 'bg-rose-950/90 border-rose-500';
+      const textColor = type === 'success' ? 'text-emerald-400' : 'text-rose-400';
+      const icon = type === 'success' ? 'check-circle' : 'alert-circle';
+      
+      toast.className = `p-4 rounded-xl border glass-card backdrop-blur-md flex items-start gap-3 shadow-lg transform translate-y-2 opacity-0 transition-all duration-300 ${bgColor}`;
+      toast.innerHTML = `
+        <div class="${textColor} mt-0.5">
+          <i data-lucide="${icon}" class="w-5 h-5"></i>
+        </div>
+        <div class="text-sm font-semibold text-slate-200">${message}</div>
+      `;
+      
+      container.appendChild(toast);
+      lucide.createIcons();
+      
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 10);
+      
+      setTimeout(() => {
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // Submit handler
+    document.getElementById('otp-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById('submit-btn');
+      let otpCode = '';
+      inputs.forEach(input => otpCode += input.value);
+
+      if (otpCode.length !== 6) {
+        showToast('Please enter the full 6-digit OTP code');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `
+        <svg class="animate-spin h-5 w-5 text-slate-950" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span>Verifying Code...</span>
+      `;
+
+      try {
+        const response = await fetch('/api/auth/verify-otp', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email: emailParam, otp_code: otpCode }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          showToast('Email verified successfully!', 'success');
+          
+          // Save JWT and user
+          localStorage.setItem('token', result.token);
+          localStorage.setItem('user', JSON.stringify(result.user));
+
+          // Redirect to patient dashboard
+          setTimeout(() => {
+            window.location.href = '/dashboard.html';
+          }, 1500);
+        } else {
+          showToast(result.message || 'Verification failed');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `
+            <span>Verify Code</span>
+            <i data-lucide="check" class="w-4 h-4"></i>
+          `;
+          lucide.createIcons();
+        }
+      } catch (err) {
+        console.error('Verify error:', err);
+        showToast('Server connection error. Please try again.');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `
+          <span>Verify Code</span>
+          <i data-lucide="check" class="w-4 h-4"></i>
+        `;
+        lucide.createIcons();
+      }
+    });
+
+    // Handle Resend Action
+    async function handleResend() {
+      resendBtn.disabled = true;
+
+      try {
+        const response = await fetch('/api/auth/resend-otp', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email: emailParam }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          showToast(result.message, 'success');
+          // Reset Timer
+          secondsLeft = 300;
+        } else {
+          showToast(result.message || 'Failed to resend code');
+          resendBtn.disabled = false;
+        }
+      } catch (err) {
+        console.error('Resend error:', err);
+        showToast('Error requesting new code. Please try again.');
+        resendBtn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
