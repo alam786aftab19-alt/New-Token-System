@@ -165,8 +165,8 @@
 
   <script>
     // Auth check
-    const token = localStorage.getItem('token');
-    const userJson = localStorage.getItem('user');
+    const token = sessionStorage.getItem('token');
+    const userJson = sessionStorage.getItem('user');
 
     if (!token || !userJson) {
       window.location.href = '/login.html';
@@ -220,8 +220,8 @@
     }
 
     function handleLogout() {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
       window.location.href = '/login.html';
     }
 

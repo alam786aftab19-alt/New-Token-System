@@ -274,8 +274,8 @@
     lucide.createIcons();
 
     // Check login state to customize Nav Actions
-    const token = localStorage.getItem('token');
-    const userJson = localStorage.getItem('user');
+    const token = sessionStorage.getItem('token');
+    const userJson = sessionStorage.getItem('user');
 
     if (token && userJson) {
       try {
@@ -304,8 +304,8 @@
     }
 
     function handleLogout() {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
       window.location.reload();
     }
   </script>

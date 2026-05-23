@@ -102,8 +102,8 @@
     lucide.createIcons();
 
     // Check if user is already logged in
-    const cachedToken = localStorage.getItem('token');
-    const cachedUser = localStorage.getItem('user');
+    const cachedToken = sessionStorage.getItem('token');
+    const cachedUser = sessionStorage.getItem('user');
     if (cachedToken && cachedUser) {
       try {
         const u = JSON.parse(cachedUser);
@@ -175,8 +175,8 @@
           showToast('Sign in successful!', 'success');
           
           // Save credentials
-          localStorage.setItem('token', result.token);
-          localStorage.setItem('user', JSON.stringify(result.user));
+          sessionStorage.setItem('token', result.token);
+          sessionStorage.setItem('user', JSON.stringify(result.user));
 
           // Redirect based on role
           setTimeout(() => {

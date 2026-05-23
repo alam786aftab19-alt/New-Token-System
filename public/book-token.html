@@ -133,8 +133,8 @@
 
   <script>
     // Authentication guard
-    const token = localStorage.getItem('token');
-    const userJson = localStorage.getItem('user');
+    const token = sessionStorage.getItem('token');
+    const userJson = sessionStorage.getItem('user');
 
     if (!token || !userJson) {
       window.location.href = '/login.html';
